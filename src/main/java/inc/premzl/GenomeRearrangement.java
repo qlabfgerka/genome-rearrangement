@@ -7,6 +7,7 @@ import java.util.Objects;
 import java.util.stream.IntStream;
 
 import static inc.premzl.Files.FileOperations.readFile;
+import static inc.premzl.Sorts.BreakpointReversalSort.breakpointReversalSort;
 import static inc.premzl.Sorts.SimpleReversalSort.simpleReversalSort;
 
 public class GenomeRearrangement {
@@ -21,7 +22,7 @@ public class GenomeRearrangement {
 
         if (Objects.equals(args[0], "simple"))
             simpleReversalSort(unsorted, sorted, max);
-        //else if (args[0] == "bp")
-        //
+        else if (Objects.equals(args[0], "bp"))
+            breakpointReversalSort(unsorted);
     }
 }

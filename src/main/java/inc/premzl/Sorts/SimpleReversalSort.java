@@ -7,9 +7,9 @@ import static inc.premzl.Lists.ListOperations.listEquals;
 import static inc.premzl.Lists.ListOperations.printList;
 
 public class SimpleReversalSort {
-    public static List<Integer> simpleReversalSort(List<Integer> unsorted,
-                                                   List<Integer> sorted,
-                                                   int max) throws Exception {
+    public static void simpleReversalSort(List<Integer> unsorted,
+                                          List<Integer> sorted,
+                                          int max) throws Exception {
         int j;
         for (int i = 0; i <= max; i++) {
             j = unsorted.indexOf(i);
@@ -17,7 +17,7 @@ public class SimpleReversalSort {
                 Collections.reverse(i > j ? unsorted.subList(j, i + 1) : unsorted.subList(i, j + 1));
                 printList(unsorted);
             }
-            if (listEquals(unsorted, sorted)) return unsorted;
+            if (listEquals(unsorted, sorted)) return;
         }
 
         throw new Exception("Unable to sort array!");
