@@ -21,8 +21,10 @@ public class GenomeRearrangement {
         List<Integer> sorted = new ArrayList<>(new ArrayList<>(IntStream.rangeClosed(0, max).boxed().toList()));
 
         if (Objects.equals(args[0], "simple"))
-            simpleReversalSort(unsorted, sorted, max);
+            System.out.printf("ROTATIONS: %d", simpleReversalSort(unsorted, sorted, max));
         else if (Objects.equals(args[0], "bp"))
-            breakpointReversalSort(unsorted);
+            System.out.printf("ROTATIONS: %d", breakpointReversalSort(unsorted));
+        else if (Objects.equals(args[0], "custom"))
+            System.out.printf("ROTATIONS: %d", breakpointReversalSort(unsorted));
     }
 }
