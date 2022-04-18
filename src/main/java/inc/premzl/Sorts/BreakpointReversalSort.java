@@ -10,24 +10,24 @@ import java.util.Objects;
 import static inc.premzl.Lists.ListOperations.printSequences;
 
 public class BreakpointReversalSort {
-    public static int breakpointReversalSort(List<Integer> unsorted) {
+    public static int breakpointReversalSort(List<Integer> unsorted, boolean custom) {
         List<Item> sequences = getSequences(unsorted);
-        int min, prev, rotations = 0;
-
-        //printSequences(sequences);
-        int breakpoints = getBreakpoints((sequences));
+        int min, prev, rotations = 0, breakpoints = getBreakpoints((sequences));
 
         while (breakpoints > 0) {
-            min = minInDescending(sequences);
+            if (!custom) min = minInDescending(sequences);
+            else min = maxInDescending(sequences);
             if (min != -1) {
-                prev = findInSequence(sequences, min - 1);
+                prev = findInSequence(sequences, custom ? min + 1 : min - 1);
                 min = findInSequence(sequences, min);
-                Collections.reverse(min > prev ? sequences.subList(prev + 1, min + 1) : sequences.subList(min + 1, prev + 1));
-                breakpoints -= updateIndexes(sequences, Math.max(min, prev), Math.min(min, prev));
-            } else breakpoints -= flipFirst(sequences);
-            //printSequences(sequences);
+                if (!custom)
+                    Collections.reverse(min > prev ? sequences.subList(prev + 1, min + 1) : sequences.subList(min + 1, prev + 1));
+                else
+                    Collections.reverse(min > prev ? sequences.subList(prev, min) : sequences.subList(min, prev));
+                breakpoints -= updateIndexes(sequences, Math.max(min, prev), Math.min(min, prev), custom);
+
+            } else breakpoints -= flipFirst(sequences, custom);
             ++rotations;
-            //System.out.println(breakpoints + " " + getBreakpoints(sequences));
         }
 
         printSequences(sequences);
@@ -70,6 +70,18 @@ public class BreakpointReversalSort {
         return min != Integer.MAX_VALUE ? min : -1;
     }
 
+    public static int maxInDescending(List<Item> sequences) {
+        int max = Integer.MIN_VALUE;
+
+        List<Item> filtered = sequences.stream().filter(sequence -> Objects.equals(sequence.getOrder(),
+                "desc")).toList();
+
+        max = Math.max(filtered.size() != 0 ?
+                Collections.max(filtered).getValue() : Integer.MIN_VALUE, max);
+
+        return max != Integer.MIN_VALUE ? max : -1;
+    }
+
     public static int getBreakpoints(List<Item> sequences) {
         int breakpoints = 0;
         for (int i = 1; i < sequences.size(); i++)
@@ -95,7 +107,7 @@ public class BreakpointReversalSort {
         return -1;
     }
 
-    public static int flipFirst(List<Item> sequence) {
+    public static int flipFirst(List<Item> sequence, boolean custom) {
         int start = -1, end = -1, removed = 0;
         for (int i = 0; i < sequence.size(); i++) {
             if (sequence.get(i).getStrip() == sequence.get(findInSequence(sequence, 0)).getStrip()) continue;
@@ -125,12 +137,13 @@ public class BreakpointReversalSort {
 
         Collections.reverse(sequence.subList(start, end));
 
-        updateIndexes(sequence, end, start);
+        updateIndexes(sequence, end, start, custom);
 
         return removed;
     }
 
-    public static int updateIndexes(List<Item> sequence, int min, int prev) {
+    public static int updateIndexes(List<Item> sequence, int min, int prev, boolean custom) {
+        if (min + 1 >= sequence.size()) min--;
         int start = getFirstInStrip(sequence, sequence.get(prev).getStrip()),
                 end = getLastInStrip(sequence, sequence.get(min + 1).getStrip());
         int removed = 1;
@@ -141,8 +154,13 @@ public class BreakpointReversalSort {
                 sequence.get(i).setOrder(sequence.get(i).getValue() == sequence.get(i - 1).getValue() + 1 ? "asc" : "desc");
                 sequence.get(i - 1).setOrder(sequence.get(i).getValue() == sequence.get(i - 1).getValue() + 1 ? "asc" : "desc");
                 sequence.get(i).setStrip(sequence.get(i - 1).getStrip());
-                if (sequence.get(Math.max(min, prev)).getValue() == sequence.get(Math.max(min, prev) + 1).getValue() + 1 ||
-                        sequence.get(Math.max(min, prev)).getValue() == sequence.get(Math.max(min, prev) + 1).getValue() - 1 && removed != 2)
+                if (!custom && (sequence.get(Math.max(min, prev)).getValue() == sequence.get(Math.max(min, prev) + 1).getValue() + 1 ||
+                        sequence.get(Math.max(min, prev)).getValue() == sequence.get(Math.max(min, prev) + 1).getValue() - 1) &&
+                        removed != 2)
+                    removed = 2;
+                else if (custom && (sequence.get(Math.min(min, prev) - 1).getValue() == sequence.get(Math.min(min, prev)).getValue() + 1 ||
+                        sequence.get(Math.min(min, prev) - 1).getValue() == sequence.get(Math.min(min, prev)).getValue() - 1) &&
+                        removed != 2)
                     removed = 2;
             }
         }
