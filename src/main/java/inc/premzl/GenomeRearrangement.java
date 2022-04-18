@@ -28,7 +28,7 @@ public class GenomeRearrangement {
             System.out.printf("ROTATIONS: %d", breakpointReversalSort(unsorted, true));
         else if (Objects.equals(args[0], "test")) {
             long avgTime, start, end;
-            int iterations = 10;
+            int iterations = 1000;
             for (int opt = 0; opt < 3; opt++) {
                 avgTime = 0;
                 for (int i = 0; i < iterations; i++) {
