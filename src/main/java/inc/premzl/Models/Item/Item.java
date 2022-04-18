@@ -1,20 +1,30 @@
 package inc.premzl.Models.Item;
 
 public class Item implements Comparable<Item> {
-    private int index;
     private int value;
+    private int strip;
+    private String order;
 
-    public Item(int index, int value) {
-        this.index = index;
+    public Item(int value, int strip, String order) {
         this.value = value;
+        this.strip = strip;
+        this.order = order;
     }
 
-    public int getIndex() {
-        return index;
+    public int getStrip() {
+        return strip;
     }
 
-    public void setIndex(int index) {
-        this.index = index;
+    public void setStrip(int strip) {
+        this.strip = strip;
+    }
+
+    public String getOrder() {
+        return order;
+    }
+
+    public void setOrder(String order) {
+        this.order = order;
     }
 
     public int getValue() {

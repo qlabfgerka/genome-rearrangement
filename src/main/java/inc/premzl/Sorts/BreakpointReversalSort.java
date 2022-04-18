@@ -1,7 +1,6 @@
 package inc.premzl.Sorts;
 
 import inc.premzl.Models.Item.Item;
-import inc.premzl.Models.Sequence.Sequence;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -10,53 +9,129 @@ import java.util.Objects;
 
 public class BreakpointReversalSort {
     public static void breakpointReversalSort(List<Integer> unsorted) {
-        List<Sequence> sequences = getSequences(unsorted);
+        List<Item> sequences = getSequences(unsorted);
+        int min, prev, rotations = 0;
 
-        System.out.println("BREAKPOINTS: " + (sequences.size() - 1));
-        System.out.println(minInDescending(sequences));
+        //printSequences(sequences);
 
-        for (Sequence sequence : sequences) {
-            for (Item item : sequence.getItems()) {
-                System.out.print(item.getValue() + " ");
-            }
-            System.out.print("(" + sequence.getOrder() + ") | ");
+        while (getBreakpoints(sequences) > 0) {
+            min = minInDescending(sequences);
+            if (min != -1) {
+                prev = findInSequence(sequences, min - 1);
+                min = findInSequence(sequences, min);
+                Collections.reverse(min > prev ? sequences.subList(prev + 1, min + 1) : sequences.subList(min + 1, prev + 1));
+                updateIndexes(sequences, Math.max(min, prev), Math.min(min, prev));
+            } else flipFirst(sequences);
+            //printSequences(sequences);
+            ++rotations;
+            System.out.println(getBreakpoints(sequences));
         }
-        System.out.println();
+
+        //printSequences(sequences);
+        System.out.println("\nROTATIONS: " + rotations);
     }
 
-    public static List<Sequence> getSequences(List<Integer> list) {
-        List<Sequence> sequences = new ArrayList<>();
-        Sequence sequence = new Sequence();
+    public static List<Item> getSequences(List<Integer> list) {
         List<Item> items = new ArrayList<>();
+        Item item;
+        int stripIndex = 0;
 
         list.add(Integer.MAX_VALUE);
 
-        for (int i = 1; i < list.size(); i++) {
-            items.add(new Item(i - 1, list.get(i - 1)));
-            if (list.get(i - 1) == list.get(i) + 1) {
-                sequence.setOrder("desc");
-            } else if (list.get(i - 1) == list.get(i) - 1) {
-                sequence.setOrder("asc");
-            } else {
-                sequence.setItems(items);
-                sequences.add(sequence);
-                sequence = new Sequence();
-                items = new ArrayList<>();
+        for (int i = 0; i < list.size() - 1; i++) {
+            item = new Item(list.get(i), stripIndex, "none");
+            if (i > 0) {
+                if (list.get(i) == list.get(i - 1) + 1 || list.get(i) == list.get(i - 1) - 1) {
+                    items.get(i - 1).setOrder(list.get(i) == list.get(i - 1) + 1 ? "asc" : "desc");
+                    item.setOrder(list.get(i) == list.get(i - 1) + 1 ? "asc" : "desc");
+                    stripIndex = items.get(i - 1).getStrip();
+                    item.setStrip(stripIndex);
+                }
+            }
+            stripIndex++;
+            items.add(item);
+        }
+
+        return items;
+    }
+
+    public static int minInDescending(List<Item> sequences) {
+        int min = Integer.MAX_VALUE;
+
+        for (Item item : sequences) {
+            if (!Objects.equals(item.getOrder(), "desc")) continue;
+
+            min = Math.min(
+                    Collections.min(sequences.stream().filter(sequence -> Objects.equals(sequence.getOrder(),
+                            "desc")).toList()).getValue(), min);
+        }
+
+        return min != Integer.MAX_VALUE ? min : -1;
+    }
+
+    public static int getBreakpoints(List<Item> sequences) {
+        int breakpoints = 0;
+        for (int i = 1; i < sequences.size(); i++)
+            if (!Objects.equals(sequences.get(i).getStrip(), sequences.get(i - 1).getStrip())) breakpoints++;
+        return breakpoints;
+    }
+
+    public static int findInSequence(List<Item> sequence, int value) {
+        for (int i = 0; i < sequence.size(); i++)
+            if (sequence.get(i).getValue() == value) return i;
+        return -1;
+    }
+
+    public static int getFirstInStrip(List<Item> sequence, int strip) {
+        for (int i = 0; i < sequence.size(); i++)
+            if (sequence.get(i).getStrip() == strip) return i;
+        return -1;
+    }
+
+    public static int getLastInStrip(List<Item> sequence, int strip) {
+        for (int i = sequence.size() - 1; i >= 0; i--)
+            if (sequence.get(i).getStrip() == strip) return i;
+        return -1;
+    }
+
+    public static void flipFirst(List<Item> sequence) {
+        int start = -1, end = -1;
+        for (int i = 0; i < sequence.size(); i++) {
+            if (sequence.get(i).getStrip() == sequence.get(findInSequence(sequence, 0)).getStrip()) continue;
+            if (Objects.equals(sequence.get(i).getOrder(), "asc") && start == -1) start = i;
+            if (start != -1 && sequence.get(i).getStrip() != sequence.get(start).getStrip()) {
+                end = i;
+                break;
             }
         }
 
-        return sequences;
-    }
-
-    public static int minInDescending(List<Sequence> sequences) {
-        int min = Integer.MAX_VALUE;
-
-        for (Sequence sequence : sequences) {
-            if (!Objects.equals(sequence.getOrder(), "desc")) continue;
-
-            min = Math.min(Collections.min(sequence.getItems()).getValue(), min);
+        if (start == -1 || end == -1) {
+            for (int i = 0; i < sequence.size(); i++) {
+                if (sequence.get(i).getStrip() == sequence.get(findInSequence(sequence, 0)).getStrip()) continue;
+                if (Objects.equals(sequence.get(i).getOrder(), "none") && start == -1) {
+                    start = i;
+                    end = findInSequence(sequence, sequence.get(start).getValue() + 1);
+                    break;
+                }
+            }
         }
 
-        return min;
+        Collections.reverse(sequence.subList(start, end));
+
+        updateIndexes(sequence, start - 1, end - 1);
+    }
+
+    public static void updateIndexes(List<Item> sequence, int min, int prev) {
+        int start = getFirstInStrip(sequence, sequence.get(prev).getStrip()),
+                end = getLastInStrip(sequence, sequence.get(min + 1).getStrip());
+
+        for (int i = start; i <= end; i++) {
+            if (i != 0 && (sequence.get(i).getValue() == sequence.get(i - 1).getValue() + 1 ||
+                    sequence.get(i).getValue() == sequence.get(i - 1).getValue() - 1)) {
+                sequence.get(i).setOrder(sequence.get(i).getValue() == sequence.get(i - 1).getValue() + 1 ? "asc" : "desc");
+                sequence.get(i - 1).setOrder(sequence.get(i).getValue() == sequence.get(i - 1).getValue() + 1 ? "asc" : "desc");
+                sequence.get(i).setStrip(sequence.get(i - 1).getStrip());
+            }
+        }
     }
 }
